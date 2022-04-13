@@ -4,8 +4,9 @@ widget_sources = ['widgets/battery.cpp',
                   'widgets/launchers.cpp',
                   'widgets/network.cpp',
                   'widgets/spacing.cpp',
+                  'widgets/fastrun.cpp',
                   'widgets/window-list/window-list.cpp',
-                  'widgets/window-list/toplevel.cpp']
+                  'widgets/window-list/toplevel.cpp',]
 
 deps = [gtkmm, wayland_client, libutil, wf_protos, wfconfig, gtklayershell]
 

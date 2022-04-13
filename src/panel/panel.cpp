@@ -18,6 +18,7 @@
 #include "widgets/battery.hpp"
 #include "widgets/menu.hpp"
 #include "widgets/clock.hpp"
+#include "widgets/fastrun.hpp"
 #include "widgets/launchers.hpp"
 #include "widgets/network.hpp"
 #include "widgets/spacing.hpp"
@@ -196,6 +197,8 @@ class WayfirePanel::impl
             return Widget(new WayfireLaunchers());
         if (name == "clock")
             return Widget(new WayfireClock());
+        if (name == "fastrun")
+            return Widget(new WayfireFastRun());
         if (name == "network")
             return Widget(new WayfireNetworkInfo());
         if (name == "battery")
