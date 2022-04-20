@@ -23,11 +23,12 @@ class WfFastRunCmd : public Gtk::Button
     WfFastRunCmd(command_info cmd);
 };
 
+/* Widget which allows to run commands in two clicks. 
+ */
 class WayfireFastRun : public WayfireWidget
 {
     Gtk::Image icon;
     std::unique_ptr<WayfireMenuButton> button;
-    std::vector<std::unique_ptr<WfFastRunCmd>> commands; 
     Gtk::VButtonBox button_box;
 
     public:

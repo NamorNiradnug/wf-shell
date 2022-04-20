@@ -6,7 +6,7 @@
 
 WfFastRunCmd::WfFastRunCmd(command_info cmd) : Gtk::Button()
 {
-    icon.set_from_icon_name(cmd.icon, Gtk::ICON_SIZE_LARGE_TOOLBAR);
+    icon.set_from_icon_name(cmd.icon, Gtk::ICON_SIZE_DND);
     label.set_label(cmd.name);
     box.add(icon);
     box.add(label);
@@ -16,7 +16,9 @@ WfFastRunCmd::WfFastRunCmd(command_info cmd) : Gtk::Button()
     add(box);
     box.show();
 
-    set_tooltip_text(cmd.cmd);
+    // Unfortunately tooltips don't work well in GTK3 popovers
+    // https://gitlab.gnome.org/GNOME/gtk/issues/1708
+    // set_tooltip_text(cmd.cmd);
     get_style_context()->add_class("flat");
     signal_clicked().connect_notify([=] {
         Glib::spawn_command_line_async(cmd.cmd);
@@ -47,12 +49,9 @@ static bool begins_with(const std::string &str, const std::string &prefix)
 
 void WayfireFastRun::handle_config_reload()
 {
-    commands.clear();
-    
-    auto children = button_box.get_children();
-    for (auto ch : children)
+    for (auto child : button_box.get_children())
     {
-        button_box.remove(*ch);
+        button_box.remove(*child);
     }
 
     auto section = WayfireShellApp::get().config.get_section("panel");
@@ -64,7 +63,7 @@ void WayfireFastRun::handle_config_reload()
 
     for (auto opt : section->get_registered_options())
     {
-        if (begins_with(opt->get_name(), command_prefix))
+        if (begins_with(opt->get_name(), command_prefix) && !opt->get_value_str().empty())
         {
             auto cmd_name = opt->get_name().substr(command_prefix.size());
             commands_info.insert({ cmd_name, { opt->get_value_str(), "system-run", opt->get_value_str() }});
@@ -99,7 +98,6 @@ void WayfireFastRun::handle_config_reload()
     {
         auto command = new WfFastRunCmd(cmd);
         button_box.add(*command);
-        commands.push_back(std::unique_ptr<WfFastRunCmd>(command));
     }
 
     button_box.show_all();
