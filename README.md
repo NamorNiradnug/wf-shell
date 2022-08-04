@@ -1,3 +1,5 @@
+### ⚠️ The master branch is not meant to be merged: it contains my tweaks for my personal usage.
+
 # wf-shell
 
 wf-shell is a repository which contains the various components needed to built a fully functional DE based around wayfire.
