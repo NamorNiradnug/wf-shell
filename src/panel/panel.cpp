@@ -21,6 +21,7 @@
 #include "widgets/launchers.hpp"
 #include "widgets/network.hpp"
 #include "widgets/spacing.hpp"
+#include "widgets/media.hpp"
 #ifdef HAVE_PULSE
 #include "widgets/volume.hpp"
 #endif
@@ -211,6 +212,8 @@ class WayfirePanel::impl
         }
         if (name == "window-list")
             return Widget(new WayfireWindowList(output));
+        if (name == "media")
+            return Widget(new WayfireMedia());
 
         std::string spacing = "spacing";
         if (name.find(spacing) == 0)
