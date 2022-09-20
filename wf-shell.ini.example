@@ -13,7 +13,7 @@ randomize = 0
 [panel]
 # widgets_* is a space-separated list of widgets to be displayed
 # at the corresponding part of the panel
-# Supported widgets are: launchers clock network battery window-list volume menu
+# Supported widgets are: launchers clock network battery window-list volume menu notifications
 # A special widgets is spacing widgets, it can be used to add padding everywhere on the panel
 # To use it, just append the amount of pixels you want as a padding
 # to the word "spacing" and use it as a plugin
@@ -102,6 +102,11 @@ network_status_use_color = yes
 # Configuration for the menu widget
 # whether to enable fuzzy search in the menu
 menu_fuzzy_search = 1
+
+# Minimum width and height for the contents of the menu.
+# Can be useful for small screens and/or high DPI scaling.
+menu_min_content_width = 500
+menu_min_content_height = 500
 
 # image file to use as the menu icon
 # menu_icon = /usr/share/wayfire/icons/wayfire.png

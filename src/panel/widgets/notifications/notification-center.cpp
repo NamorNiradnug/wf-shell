@@ -15,7 +15,7 @@ void WayfireNotificationCenter::init(Gtk::HBox *container)
 
     button = std::make_unique<WayfireMenuButton>("panel");
 
-    icon.set_from_icon_name("notification", Gtk::ICON_SIZE_LARGE_TOOLBAR);
+    updateIcon();
     button->add(icon);
     container->add(*button);
 
@@ -30,6 +30,15 @@ void WayfireNotificationCenter::init(Gtk::HBox *container)
     status_label.show();
     status_label.set_line_wrap();
     status_label.set_line_wrap_mode(Pango::WRAP_WORD);
+
+    button->set_tooltip_text("Middle click to toggle DND mode.");
+    button->signal_button_press_event().connect_notify([=](GdkEventButton *ev) {
+        if (ev->button == 2)
+        {
+            dnd_enabled = !dnd_enabled;
+            updateIcon();
+        }
+    });
 }
 
 void WayfireNotificationCenter::newNotification(Notification::id_type id)
@@ -41,19 +50,22 @@ void WayfireNotificationCenter::newNotification(Notification::id_type id)
     vbox.pack_end(*widget);
     vbox.show_all();
     widget->set_reveal_child();
-    auto *popover = button->get_popover();
-    if (!popover_timeout.empty() || !popover->is_visible())
+    if (!dnd_enabled || (show_critical_in_dnd && Daemon::getNotifications().at(id).hints.urgency == 2))
     {
-        popover_timeout.disconnect();
-        popover_timeout = Glib::signal_timeout().connect(
-            [=] {
-                popover->popdown();
-                popover_timeout.disconnect();
-                return true;
-            },
-            timeout * 1000);
+        auto *popover = button->get_popover();
+        if (timeout > 0 && (!popover_timeout.empty() || !popover->is_visible()))
+        {
+            popover_timeout.disconnect();
+            popover_timeout = Glib::signal_timeout().connect(
+                [=] {
+                    popover->popdown();
+                    popover_timeout.disconnect();
+                    return true;
+                },
+                timeout * 1000);
+        }
+        popover->popup();
     }
-    popover->popup();
 }
 
 void WayfireNotificationCenter::replaceNotification(Notification::id_type id)
@@ -84,4 +96,12 @@ void WayfireNotificationCenter::onDaemonStop()
 {
     button->get_popover()->remove();
     button->get_popover()->add(status_label);
+}
+
+void WayfireNotificationCenter::updateIcon()
+{
+    if (dnd_enabled)
+        icon.set_from_icon_name("notifications-disabled", Gtk::ICON_SIZE_LARGE_TOOLBAR);
+    else
+        icon.set_from_icon_name("notifications", Gtk::ICON_SIZE_LARGE_TOOLBAR);
 }

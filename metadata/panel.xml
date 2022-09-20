@@ -187,6 +187,18 @@
 		<hint>file</hint>
 		<default></default>
 	</option>
+	<option name="menu_min_content_width" type="int">
+		<_short>Menu Minimum Content Width</_short>
+		<default>500</default>
+		<min>100</min>
+		<max>5000</max>
+	</option>
+	<option name="menu_min_content_height" type="int">
+		<_short>Menu Minimum Content Height</_short>
+		<default>500</default>
+		<min>100</min>
+		<max>5000</max>
+	</option>
 	<option name="menu_logout_command" type="string">
 		<_short>Menu Logout Command</_short>
 		<_long>If not specified, a default logout interface will be used.</_long>
@@ -230,6 +242,11 @@
 		<_short>Notifications Display Timeout</_short>
 		<_long>Set to negative value to disable.</_long>
 		<default>2.5</default>
+	</option>
+	<option name="notifications_critical_in_dnd" type="bool">
+		<_short>Always Show Critical notifications</_short>
+		<_long>Makes critical notifications to be shown even in DND mode.</_long>
+		<default>true</default>
 	</option>
 	</group>
 	</plugin>

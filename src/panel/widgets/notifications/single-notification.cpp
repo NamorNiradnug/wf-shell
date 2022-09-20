@@ -12,7 +12,7 @@ const static std::string FILE_PREFIX = "file://";
 
 static bool begins_with(const std::string &str, const std::string &prefix)
 {
-    return str.size() >= prefix.size() && str.substr(prefix.size()) == prefix;
+    return str.size() >= prefix.size() && str.substr(0, prefix.size()) == prefix;
 }
 
 inline static bool is_file_uri(const std::string &str)
@@ -70,7 +70,8 @@ WfSingleNotification::WfSingleNotification(const Notification &notification)
             time_label.set_label(format_recv_time(notification.additional_info.recv_time));
             return true;
         },
-        DAY_SEC * 1000, Glib::PRIORITY_LOW);
+        // updating once a day doesn't work with system suspending/hybernating
+        10000, Glib::PRIORITY_LOW);
     top_bar.pack_start(time_label, false, true);
 
     close_image.set_from_icon_name("window-close", Gtk::ICON_SIZE_LARGE_TOOLBAR);
