@@ -1,19 +1,19 @@
 #ifndef WF_PANEL_HPP
 #define WF_PANEL_HPP
 
+#include <gtkmm/window.h>
 #include <memory>
 #include <wayland-client.h>
-#include <gtkmm/window.h>
 
 #include "wf-shell-app.hpp"
 
 class WayfirePanel
 {
     public:
-    WayfirePanel(WayfireOutput *output);
+    explicit WayfirePanel(WayfireOutput *output);
 
     wl_surface *get_wl_surface();
-    Gtk::Window& get_window();
+    Gtk::Window &get_window();
     void handle_config_reload();
 
     private:
@@ -23,20 +23,20 @@ class WayfirePanel
 
 class WayfirePanelApp : public WayfireShellApp
 {
-  public:
-    WayfirePanel* panel_for_wl_output(wl_output *output);
-    static WayfirePanelApp& get();
+    public:
+    WayfirePanel *panel_for_wl_output(wl_output *output);
+    static WayfirePanelApp &get();
 
     /* Starts the program. get() is valid afterward the first (and the only)
      * call to create() */
     static void create(int argc, char **argv);
-    ~WayfirePanelApp();
+    ~WayfirePanelApp() override = default;
 
     void handle_new_output(WayfireOutput *output) override;
     void handle_output_removed(WayfireOutput *output) override;
     void on_config_reload() override;
 
-  private:
+    private:
     WayfirePanelApp(int argc, char **argv);
 
     class impl;
@@ -44,4 +44,3 @@ class WayfirePanelApp : public WayfireShellApp
 };
 
 #endif /* end of include guard: WF_PANEL_HPP */
-

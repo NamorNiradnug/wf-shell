@@ -1,32 +1,33 @@
+#include <gdk/gdkwayland.h>
 #include <glibmm/main.h>
-#include <gtkmm/window.h>
+#include <gtk-layer-shell.h>
+#include <gtkmm/application.h>
 #include <gtkmm/headerbar.h>
 #include <gtkmm/hvbox.h>
-#include <gtkmm/application.h>
-#include <gdk/gdkwayland.h>
-#include <gtk-layer-shell.h>
+#include <gtkmm/window.h>
 
-#include <stdio.h>
 #include <iostream>
+#include <memory>
 #include <sstream>
+#include <stdio.h>
 
 #include <map>
 
-#include "panel.hpp"
 #include "../util/gtk-utils.hpp"
+#include "panel.hpp"
 
 #include "widgets/battery.hpp"
-#include "widgets/menu.hpp"
 #include "widgets/clock.hpp"
 #include "widgets/fastrun.hpp"
 #include "widgets/launchers.hpp"
+#include "widgets/menu.hpp"
 #include "widgets/network.hpp"
 #include "widgets/spacing.hpp"
 #ifdef HAVE_PULSE
 #include "widgets/volume.hpp"
 #endif
-#include "widgets/window-list/window-list.hpp"
 #include "widgets/notifications/notification-center.hpp"
+#include "widgets/window-list/window-list.hpp"
 
 #include "wf-autohide-window.hpp"
 
@@ -36,21 +37,17 @@ struct WayfirePanelZwfOutputCallbacks
     std::function<void()> leave_fullscreen;
 };
 
-static void handle_zwf_output_enter_fullscreen(void* dd,
-    zwf_output_v2 *zwf_output_v2)
+static void handle_zwf_output_enter_fullscreen(void *dd, zwf_output_v2 *zwf_output_v2)
 {
-    auto data = (WayfirePanelZwfOutputCallbacks*)
-        zwf_output_v2_get_user_data(zwf_output_v2);
+    auto *data = (WayfirePanelZwfOutputCallbacks *)zwf_output_v2_get_user_data(zwf_output_v2);
 
     if (data)
         data->enter_fullscreen();
 }
 
-static void handle_zwf_output_leave_fullscreen(void *,
-    zwf_output_v2 *zwf_output_v2)
+static void handle_zwf_output_leave_fullscreen(void *, zwf_output_v2 *zwf_output_v2)
 {
-    auto data = (WayfirePanelZwfOutputCallbacks*)
-        zwf_output_v2_get_user_data(zwf_output_v2);
+    auto *data = (WayfirePanelZwfOutputCallbacks *)zwf_output_v2_get_user_data(zwf_output_v2);
 
     if (data)
         data->leave_fullscreen();
@@ -76,14 +73,16 @@ class WayfirePanel::impl
 
     int last_autohide_value = -1;
     WfOption<bool> autohide_opt{"panel/autohide"};
-    std::function<void()> autohide_opt_updated = [=] ()
-    {
+    std::function<void()> autohide_opt_updated = [=]() {
         if (autohide_opt == last_autohide_value)
             return;
 
-        if (autohide_opt) {
+        if (autohide_opt)
+        {
             this->window->increase_autohide();
-        } else if (last_autohide_value == 1) {
+        }
+        else if (last_autohide_value == 1)
+        {
             this->window->decrease_autohide();
         }
 
@@ -92,44 +91,43 @@ class WayfirePanel::impl
     };
 
     WfOption<std::string> bg_color{"panel/background_color"};
-    std::function<void()> on_window_color_updated = [=] ()
-    {
-        if ((std::string)bg_color == "gtk_default")
+    std::function<void()> on_window_color_updated = [=]() {
+        if (bg_color.value() == "gtk_default")
             return window->unset_background_color();
 
         Gdk::RGBA rgba;
-        if ((std::string)bg_color == "gtk_headerbar")
+        if (bg_color.value() == "gtk_headerbar")
         {
             Gtk::HeaderBar headerbar;
             rgba = headerbar.get_style_context()->get_background_color();
-        } else {
-            auto color = wf::option_type::from_string<wf::color_t> (
-                ((wf::option_sptr_t<std::string>)bg_color)->get_value_str());
-            if (!color) {
-                std::cerr << "Invalid panel background color in"
-                    " config file" << std::endl;
+        }
+        else
+        {
+            auto color = wf::option_type::from_string<wf::color_t>(bg_color);
+            if (!color)
+            {
+                std::cerr << "Invalid panel background color in config file" << std::endl;
                 return;
             }
 
-            rgba.set_red(color.value().r);
-            rgba.set_green(color.value().g);
-            rgba.set_blue(color.value().b);
-            rgba.set_alpha(color.value().a);
+            rgba.set_red(color->r);
+            rgba.set_green(color->g);
+            rgba.set_blue(color->b);
+            rgba.set_alpha(color->a);
         }
 
         window->override_background_color(rgba);
     };
 
     WfOption<std::string> panel_layer{"panel/layer"};
-    std::function<void()> set_panel_layer = [=] ()
-    {
-        if ((std::string)panel_layer == "overlay")
+    std::function<void()> set_panel_layer = [=]() {
+        if (panel_layer.value() == "overlay")
             gtk_layer_set_layer(window->gobj(), GTK_LAYER_SHELL_LAYER_OVERLAY);
-        if ((std::string)panel_layer == "top")
+        if (panel_layer.value() == "top")
             gtk_layer_set_layer(window->gobj(), GTK_LAYER_SHELL_LAYER_TOP);
-        if ((std::string)panel_layer == "bottom")
+        if (panel_layer.value() == "bottom")
             gtk_layer_set_layer(window->gobj(), GTK_LAYER_SHELL_LAYER_BOTTOM);
-        if ((std::string)panel_layer == "background")
+        if (panel_layer.value() == "background")
             gtk_layer_set_layer(window->gobj(), GTK_LAYER_SHELL_LAYER_BACKGROUND);
     };
 
@@ -138,7 +136,7 @@ class WayfirePanel::impl
 
     void create_window()
     {
-        window = std::make_unique<WayfireAutohidingWindow> (output, "panel");
+        window = std::make_unique<WayfireAutohidingWindow>(output, "panel");
         window->set_size_request(1, minimal_panel_height);
         panel_layer.set_callback(set_panel_layer);
         set_panel_layer(); // initial setting
@@ -152,15 +150,14 @@ class WayfirePanel::impl
         autohide_opt.set_callback(autohide_opt_updated);
         autohide_opt_updated(); // set initial autohide status
 
-        if ((std::string)css_path != "")
+        if (!css_path.value().empty())
         {
             auto css = load_css_from_path(css_path);
             if (css)
             {
                 auto screen = Gdk::Screen::get_default();
                 auto style_context = Gtk::StyleContext::create();
-                style_context->add_provider_for_screen(
-                    screen, css, GTK_STYLE_PROVIDER_PRIORITY_USER);
+                style_context->add_provider_for_screen(screen, css, GTK_STYLE_PROVIDER_PRIORITY_USER);
             }
         }
 
@@ -168,8 +165,7 @@ class WayfirePanel::impl
         init_widgets();
         init_layout();
 
-        window->signal_delete_event().connect(
-            sigc::mem_fun(this, &WayfirePanel::impl::on_delete));
+        window->signal_delete_event().connect(sigc::mem_fun(this, &WayfirePanel::impl::on_delete));
     }
 
     bool on_delete(GdkEventAny *ev)
@@ -182,15 +178,15 @@ class WayfirePanel::impl
     void init_layout()
     {
         content_box.pack_start(left_box, false, false);
-        std::vector<Gtk::Widget*> center_children = center_box.get_children();
-        if (center_children.size() > 0)
+        std::vector<Gtk::Widget *> center_children = center_box.get_children();
+        if (!center_children.empty())
             content_box.set_center_widget(center_box);
         content_box.pack_end(right_box, false, false);
         window->add(content_box);
         window->show_all();
     }
 
-    Widget widget_from_name(std::string name)
+    Widget widget_from_name(const std::string &name)
     {
         if (name == "menu")
             return Widget(new WayfireMenu());
@@ -204,13 +200,13 @@ class WayfirePanel::impl
             return Widget(new WayfireNetworkInfo());
         if (name == "battery")
             return Widget(new WayfireBatteryInfo());
-        if (name == "volume") {
+        if (name == "volume")
+        {
 #ifdef HAVE_PULSE
             return Widget(new WayfireVolume());
 #else
 #warning "Pulse not found, volume widget will not be available."
-        std::cerr << "Built without pulse support, volume widget "
-            " is not available." << std::endl;
+            std::cerr << "Built without pulse support, volume widget is not available." << std::endl;
 #endif
         }
         if (name == "window-list")
@@ -226,7 +222,7 @@ class WayfirePanel::impl
 
             if (pixel <= 0)
             {
-                std::cerr << "Invalid spacing, " << pixel << std::endl;
+                std::cerr << "Invalid spacing: " << pixel << std::endl;
                 return nullptr;
             }
 
@@ -238,27 +234,26 @@ class WayfirePanel::impl
         return nullptr;
     }
 
-    static std::vector<std::string> tokenize(std::string list)
+    static std::vector<std::string> tokenize(const std::string &list)
     {
         std::string token;
         std::istringstream stream(list);
         std::vector<std::string> result;
 
-        while(stream >> token)
+        while (stream >> token)
         {
-            if (token.size())
+            if (!token.empty())
                 result.push_back(token);
         }
 
         return result;
     }
 
-    void reload_widgets(std::string list, WidgetContainer& container,
-                        Gtk::HBox& box)
+    void reload_widgets(const std::string &list, WidgetContainer &container, Gtk::HBox &box)
     {
         container.clear();
         auto widgets = tokenize(list);
-        for (auto widget_name : widgets)
+        for (const auto &widget_name : widgets)
         {
             auto widget = widget_from_name(widget_name);
             if (!widget)
@@ -275,19 +270,13 @@ class WayfirePanel::impl
     WfOption<std::string> center_widgets_opt{"panel/widgets_center"};
     void init_widgets()
     {
-        left_widgets_opt.set_callback([=] () {
-            reload_widgets((std::string)left_widgets_opt, left_widgets, left_box);
-        });
-        right_widgets_opt.set_callback([=] () {
-            reload_widgets((std::string)right_widgets_opt, right_widgets, right_box);
-        });
-        center_widgets_opt.set_callback([=] () {
-            reload_widgets((std::string)center_widgets_opt, center_widgets, center_box);
-        });
+        left_widgets_opt.set_callback([=]() { reload_widgets(left_widgets_opt, left_widgets, left_box); });
+        right_widgets_opt.set_callback([=]() { reload_widgets(right_widgets_opt, right_widgets, right_box); });
+        center_widgets_opt.set_callback([=]() { reload_widgets(center_widgets_opt, center_widgets, center_box); });
 
-        reload_widgets((std::string)left_widgets_opt, left_widgets, left_box);
-        reload_widgets((std::string)right_widgets_opt, right_widgets, right_box);
-        reload_widgets((std::string)center_widgets_opt, center_widgets, center_box);
+        reload_widgets(left_widgets_opt, left_widgets, left_box);
+        reload_widgets(right_widgets_opt, right_widgets, right_box);
+        reload_widgets(center_widgets_opt, center_widgets, center_box);
     }
 
     WayfirePanelZwfOutputCallbacks callbacks;
@@ -318,48 +307,58 @@ class WayfirePanel::impl
         return window->get_wl_surface();
     }
 
-    Gtk::Window& get_window()
+    Gtk::Window &get_window()
     {
         return *window;
     }
 
     void handle_config_reload()
     {
-        for (auto& w : left_widgets)
+        for (auto &w : left_widgets)
             w->handle_config_reload();
-        for (auto& w : right_widgets)
+        for (auto &w : right_widgets)
             w->handle_config_reload();
-        for (auto& w : center_widgets)
+        for (auto &w : center_widgets)
             w->handle_config_reload();
     }
 };
 
-WayfirePanel::WayfirePanel(WayfireOutput *output) : pimpl(new impl(output)) { }
-wl_surface *WayfirePanel::get_wl_surface() { return pimpl->get_wl_surface(); }
-Gtk::Window& WayfirePanel::get_window() { return pimpl->get_window(); }
-void WayfirePanel::handle_config_reload() { return pimpl->handle_config_reload(); }
+WayfirePanel::WayfirePanel(WayfireOutput *output) : pimpl(new impl(output))
+{
+}
+wl_surface *WayfirePanel::get_wl_surface()
+{
+    return pimpl->get_wl_surface();
+}
+Gtk::Window &WayfirePanel::get_window()
+{
+    return pimpl->get_window();
+}
+void WayfirePanel::handle_config_reload()
+{
+    return pimpl->handle_config_reload();
+}
 
 class WayfirePanelApp::impl
 {
-  public:
-    std::map<WayfireOutput*, std::unique_ptr<WayfirePanel> > panels;
+    public:
+    std::map<WayfireOutput *, std::unique_ptr<WayfirePanel>> panels;
 };
 
 void WayfirePanelApp::on_config_reload()
 {
-    for (auto& p : priv->panels)
+    for (auto &p : priv->panels)
         p.second->handle_config_reload();
 }
 
 void WayfirePanelApp::handle_new_output(WayfireOutput *output)
 {
-    priv->panels[output] = std::unique_ptr<WayfirePanel> (
-        new WayfirePanel(output));
+    priv->panels[output] = std::make_unique<WayfirePanel>(output);
 }
 
-WayfirePanel* WayfirePanelApp::panel_for_wl_output(wl_output *output)
+WayfirePanel *WayfirePanelApp::panel_for_wl_output(wl_output *output)
 {
-    for (auto& p : priv->panels)
+    for (auto &p : priv->panels)
     {
         if (p.first->wo == output)
             return p.second.get();
@@ -373,11 +372,11 @@ void WayfirePanelApp::handle_output_removed(WayfireOutput *output)
     priv->panels.erase(output);
 }
 
-WayfirePanelApp& WayfirePanelApp::get()
+WayfirePanelApp &WayfirePanelApp::get()
 {
     if (!instance)
         throw std::logic_error("Calling WayfirePanelApp::get() before starting app!");
-    return dynamic_cast<WayfirePanelApp&>(*instance.get());
+    return dynamic_cast<WayfirePanelApp &>(*instance);
 }
 
 void WayfirePanelApp::create(int argc, char **argv)
@@ -389,9 +388,9 @@ void WayfirePanelApp::create(int argc, char **argv)
     instance->run();
 }
 
-WayfirePanelApp::~WayfirePanelApp() = default;
-WayfirePanelApp::WayfirePanelApp(int argc, char **argv)
-    : WayfireShellApp(argc, argv), priv(new impl()) { }
+WayfirePanelApp::WayfirePanelApp(int argc, char **argv) : WayfireShellApp(argc, argv), priv(new impl())
+{
+}
 
 int main(int argc, char **argv)
 {

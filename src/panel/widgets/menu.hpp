@@ -110,6 +110,7 @@ class WayfireMenu : public WayfireWidget
     /* loaded_apps is a list of the already-opened applications + their execs,
      * so that we don't show duplicate entries */
     std::set<std::pair<std::string, std::string>> loaded_apps;
+    gulong app_info_monitor_connection;
 
     WfOption<std::string> menu_logout_command{"panel/menu_logout_command"};
     WfOption<bool> fuzzy_search_enabled{"panel/menu_fuzzy_search"};
@@ -126,7 +127,7 @@ class WayfireMenu : public WayfireWidget
     void init(Gtk::HBox *container) override;
     void hide_menu();
     void refresh();
-    virtual ~WayfireMenu() = default;
+    ~WayfireMenu() override;
 };
 
 #endif /* end of include guard: WIDGETS_MENU_HPP */

@@ -505,11 +505,16 @@ void WayfireMenu::init(Gtk::HBox *container)
     update_popover_layout();
 
     GAppInfoMonitor *app_info_monitor = g_app_info_monitor_get();
-    g_signal_connect(app_info_monitor, "changed", G_CALLBACK(app_info_changed), this);
+    app_info_monitor_connection = g_signal_connect(app_info_monitor, "changed", G_CALLBACK(app_info_changed), this);
 
     hbox.show();
     main_image.show();
     button->show();
+}
+
+WayfireMenu::~WayfireMenu()
+{
+    g_signal_handler_disconnect(g_app_info_monitor_get(), app_info_monitor_connection);
 }
 
 void WayfireMenu::hide_menu()
