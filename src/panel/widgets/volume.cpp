@@ -73,10 +73,12 @@ void WayfireVolume::update_icon()
 
     if (gvc_stream && gvc_mixer_stream_get_is_muted(gvc_stream))
     {
+        volume_scale.set_has_origin(false);
         main_image.set_from_icon_name("audio-volume-muted", Gtk::ICON_SIZE_MENU);
         return;
     }
 
+    volume_scale.set_has_origin();
     std::map<VolumeLevel, std::string> icon_name_from_state = {
         {VOLUME_LEVEL_MUTE, "audio-volume-muted"},
         {VOLUME_LEVEL_LOW, "audio-volume-low"},
