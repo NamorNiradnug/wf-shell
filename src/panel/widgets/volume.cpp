@@ -136,14 +136,14 @@ void WayfireVolume::on_volume_scroll(GdkEventScroll *event)
         (event->direction == GDK_SCROLL_SMOOTH && event->delta_y < 0))
     {
         button->set_keyboard_interactive(false);
-        set_volume(std::min(current_volume + adjustment_step, (int32_t)max_norm), VOLUME_FLAG_SHOW_POPOVER);
+        set_volume(std::min(current_volume + adjustment_step, (int32_t)max_norm));
     }
 
     if (event->direction == GDK_SCROLL_DOWN ||
         (event->direction == GDK_SCROLL_SMOOTH && event->delta_y > 0))
     {
         button->set_keyboard_interactive(false);
-        set_volume(std::max(current_volume - adjustment_step, 0), VOLUME_FLAG_SHOW_POPOVER);
+        set_volume(std::max(current_volume - adjustment_step, 0));
     }
 
     button->set_keyboard_interactive(true);
