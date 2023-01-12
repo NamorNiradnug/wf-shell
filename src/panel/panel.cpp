@@ -40,7 +40,6 @@ struct WayfirePanelZwfOutputCallbacks
 static void handle_zwf_output_enter_fullscreen(void *dd, zwf_output_v2 *zwf_output_v2)
 {
     auto *data = (WayfirePanelZwfOutputCallbacks *)zwf_output_v2_get_user_data(zwf_output_v2);
-
     if (data)
         data->enter_fullscreen();
 }
