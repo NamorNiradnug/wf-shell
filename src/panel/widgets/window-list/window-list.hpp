@@ -78,13 +78,6 @@ class WayfireWindowList : public WayfireWidget
 
     void init(Gtk::HBox *container) override;
     void add_output(WayfireOutput *output);
-
-    private:
-    void on_draw(const Cairo::RefPtr<Cairo::Context>&);
-
-    void set_button_width(int width);
-    int get_default_button_width();
-    int get_target_button_width();
 };
 
 #endif /* end of include guard: WIDGETS_WINDOW_LIST_HPP */
