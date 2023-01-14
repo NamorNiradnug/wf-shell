@@ -88,6 +88,9 @@ class WayfireVolume : public WayfireWidget
     /** Called when the volume changed from outside of the widget */
     void on_volume_changed_external();
 
+    /** Called when the sink muted/unmuted from outside of the widget */
+    void on_muted_changed_external();
+
     /** Called when the default sink changes */
     void on_default_sink_changed();
 

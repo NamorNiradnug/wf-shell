@@ -73,13 +73,10 @@ void WayfireVolume::update_icon()
 
     if (gvc_stream && gvc_mixer_stream_get_is_muted(gvc_stream))
     {
-        volume_scale.set_has_origin(false);
-        main_image.set_from_icon_name("audio-volume-muted", Gtk::ICON_SIZE_MENU);
-        return;
+        current = VOLUME_LEVEL_MUTE;
     }
 
-    volume_scale.set_has_origin();
-    std::map<VolumeLevel, std::string> icon_name_from_state = {
+    static const std::map<VolumeLevel, std::string> icon_name_from_state = {
         {VOLUME_LEVEL_MUTE, "audio-volume-muted"},
         {VOLUME_LEVEL_LOW, "audio-volume-low"},
         {VOLUME_LEVEL_MED, "audio-volume-medium"},
@@ -87,9 +84,9 @@ void WayfireVolume::update_icon()
         {VOLUME_LEVEL_OOR, "audio-volume-muted"},
     };
 
-    button->set_size_request(0, 0);
-    main_image.set_from_icon_name(icon_name_from_state[current],
+    main_image.set_from_icon_name(icon_name_from_state.at(current),
         Gtk::ICON_SIZE_MENU);
+    volume_scale.set_has_origin(current != VOLUME_LEVEL_MUTE);
 }
 
 bool WayfireVolume::on_popover_timeout(int timer)
@@ -180,6 +177,15 @@ void WayfireVolume::on_volume_changed_external()
     check_set_popover_timeout();
 }
 
+void WayfireVolume::on_muted_changed_external()
+{
+    update_icon();
+    button->set_keyboard_interactive(false);
+    if (!button->get_popover()->is_visible())
+        button->get_popover()->popup();
+    check_set_popover_timeout();
+}
+
 static void notify_volume(GvcMixerControl *gvc_control,
     guint id, gpointer user_data)
 {
@@ -191,7 +197,7 @@ static void notify_is_muted(GvcMixerControl *gvc_control,
     guint id, gpointer user_data)
 {
     WayfireVolume *wf_volume = (WayfireVolume *) user_data;
-    wf_volume->update_icon();
+    wf_volume->on_muted_changed_external();
 }
 
 void WayfireVolume::disconnect_gvc_stream_signals()
@@ -277,7 +283,7 @@ void WayfireVolume::init(Gtk::HBox *container)
         [=] (Gtk::StateFlags) { check_set_popover_timeout(); });
 
     /* Setup gvc control */
-    gvc_control = gvc_mixer_control_new("Wayfire Volume Control");
+    gvc_control = gvc_mixer_control_new("wf-shell volume control");
     notify_default_sink_changed = g_signal_connect (gvc_control,
         "default-sink-changed", G_CALLBACK (default_sink_changed), this);
     gvc_mixer_control_open(gvc_control);
