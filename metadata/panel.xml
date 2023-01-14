@@ -92,6 +92,20 @@
 	</option>
 	</group>
 	<group>
+	<_short>Window List</_short>
+	<option name="window_list_min_width" type="int">
+		<_short>Min Width</_short>
+		<_long>Min width of a button in window list (px). Set to -1 to disable.</_long>
+		<default>110</default>
+		<min>-1</min>
+	</option>
+	<option name="window_list_max_chars" type="int">
+		<_short>Max symbols</_short>
+		<_long>Max number of symbols of window name to show in window list.</_long>
+		<default>25</default>
+	</option>
+	</group>
+	<group>
 	<_short>Clock</_short>
 	<option name="clock_format" type="string">
 		<_short>Clock Format</_short>

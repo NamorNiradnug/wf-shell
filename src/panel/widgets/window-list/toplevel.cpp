@@ -43,6 +43,10 @@ class WayfireToplevel::impl
     Glib::RefPtr<Gtk::GestureDrag> drag_gesture;
 
     Glib::ustring app_id, title;
+
+    WfOption<int> min_width{"panel/window_list_min_width"};
+    WfOption<int> max_chars{"panel/window_list_max_chars"};
+
     public:
     WayfireWindowList *window_list;
 
@@ -53,13 +57,15 @@ class WayfireToplevel::impl
         zwlr_foreign_toplevel_handle_v1_add_listener(handle,
             &toplevel_handle_v1_impl, this);
 
-        label.set_max_width_chars(20);
+        label.set_max_width_chars(max_chars);
+        max_chars.set_callback([=] { label.set_max_width_chars(max_chars); });
         label.set_ellipsize(Pango::ELLIPSIZE_END);
         button_contents.pack_start(image, false, false);
         button_contents.pack_start(label, false, false);
         button_contents.set_halign(Gtk::ALIGN_START);
         button_contents.set_spacing(5);
-        button.set_size_request(100, -1);
+        button.set_size_request(min_width, -1);
+        min_width.set_callback([=] { button.set_size_request(min_width, -1); });
         button.add(button_contents);
 
         button.signal_clicked().connect_notify(
