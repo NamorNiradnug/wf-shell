@@ -64,6 +64,8 @@ class WayfireToplevel::impl
         button_contents.pack_start(label, false, false);
         button_contents.set_halign(Gtk::ALIGN_START);
         button_contents.set_spacing(5);
+        button_contents.set_margin_right(5);
+        button_contents.set_margin_left(5);
         button.set_size_request(min_width, -1);
         min_width.set_callback([=] { button.set_size_request(min_width, -1); });
         button.add(button_contents);
