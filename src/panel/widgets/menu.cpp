@@ -4,6 +4,7 @@
 #include <giomm/icon.h>
 #include <glibmm/spawn.h>
 #include <iostream>
+#include <memory>
 #include <gtk-layer-shell.h>
 #include <gtk/gtk.h>
 #include <gtkmm/cssprovider.h>
@@ -17,8 +18,8 @@
 #define MAX_LAUNCHER_NAME_LENGTH 11
 const std::string default_icon = ICONDIR "/wayfire.png";
 
-WfMenuMenuItem::WfMenuMenuItem(WayfireMenu* _menu, AppInfo app)
-    : Gtk::HBox(), menu(_menu), m_app_info(app)
+WfMenuMenuItem::WfMenuMenuItem(WayfireMenu* _menu, const AppInfo & app)
+    : menu(_menu), m_app_info(app)
 {
     m_image.set((const Glib::RefPtr<const Gio::Icon>&) app->get_icon(),
         (Gtk::IconSize)Gtk::ICON_SIZE_LARGE_TOOLBAR);
@@ -26,25 +27,30 @@ WfMenuMenuItem::WfMenuMenuItem(WayfireMenu* _menu, AppInfo app)
 
     Glib::ustring name = app->get_name();
 
+    /*
     if (name.length() > MAX_LAUNCHER_NAME_LENGTH)
         name = name.substr(0, MAX_LAUNCHER_NAME_LENGTH - 2) + "..";
+    */
 
     m_label.set_text(name);
+    m_label.set_max_width_chars(MAX_LAUNCHER_NAME_LENGTH);
+    m_label.set_ellipsize(Pango::ELLIPSIZE_END);
     m_button_box.pack_start(m_image, false, false);
-    m_button_box.pack_end(m_label, false, false);
+    m_button_box.pack_end(m_label, false, true);
 
-    m_button.add(m_button_box);
-    m_button.get_style_context()->add_class("flat");
+    add(m_button_box);
+    // set_tooltip_text(name);
+    // m_button.get_style_context()->add_class("flat");
+    set_relief(Gtk::RELIEF_NONE);
 
     /* Wrap the button box into a HBox, with left/right padding.
      * This way, the button doesn't fill the whole area allocated for an entry
      * in the flowbox */
-    this->pack_start(m_left_pad);
-    this->pack_start(m_button);
-    this->pack_start(m_right_pad);
+    // this->pack_start(m_left_pad);
+    // this->pack_start(m_right_pad);
 
-    get_style_context()->add_class("flat");
-    m_button.signal_clicked().connect_notify(
+    // get_style_context()->add_class("flat");
+    signal_clicked().connect_notify(
         sigc::mem_fun(this, &WfMenuMenuItem::on_click));
 }
 
@@ -59,7 +65,7 @@ void WfMenuMenuItem::on_click()
  * character in pattern with the first occurence of this character after the
  * partial match. In the end, we just check if we successfully matched all
  * characters */
-static bool fuzzy_match(Glib::ustring text, Glib::ustring pattern)
+static bool fuzzy_match(const Glib::ustring& text, const Glib::ustring& pattern)
 {
     size_t i = 0, // next character in pattern to match
            j = 0; // the first unmatched character in text
@@ -84,20 +90,20 @@ static bool fuzzy_match(Glib::ustring text, Glib::ustring pattern)
     return i == pattern.length();
 }
 
-bool WfMenuMenuItem::fuzzy_match(Glib::ustring pattern)
+bool WfMenuMenuItem::fuzzy_match(const Glib::ustring & pattern)
 {
     Glib::ustring name = m_app_info->get_name();
     Glib::ustring long_name = m_app_info->get_display_name();
     Glib::ustring progr = m_app_info->get_executable();
 
-    pattern = pattern.lowercase();
+    auto pattern_lower = pattern.lowercase();
 
-    return ::fuzzy_match(progr.lowercase(), pattern)
-        || ::fuzzy_match(name.lowercase(), pattern)
-        || ::fuzzy_match(long_name.lowercase(), pattern);
+    return ::fuzzy_match(progr.lowercase(), pattern_lower)
+        || ::fuzzy_match(name.lowercase(), pattern_lower)
+        || ::fuzzy_match(long_name.lowercase(), pattern_lower);
 }
 
-bool WfMenuMenuItem::matches(Glib::ustring pattern)
+bool WfMenuMenuItem::matches(const Glib::ustring & pattern)
 {
     Glib::ustring name = m_app_info->get_name();
     Glib::ustring long_name = m_app_info->get_display_name();
@@ -108,7 +114,7 @@ bool WfMenuMenuItem::matches(Glib::ustring pattern)
         + long_name.lowercase() + "$" + progr.lowercase() + "$"
         + descr.lowercase();
 
-    return text.find(pattern.lowercase()) != text.npos;
+    return text.find(pattern.lowercase()) != Glib::ustring::npos;
 }
 
 bool WfMenuMenuItem::operator < (const WfMenuMenuItem& other)
@@ -117,7 +123,7 @@ bool WfMenuMenuItem::operator < (const WfMenuMenuItem& other)
         < Glib::ustring(other.m_app_info->get_name()).lowercase();
 }
 
-void WayfireMenu::load_menu_item(AppInfo app_info)
+void WayfireMenu::load_menu_item(const AppInfo & app_info)
 {
     if (!app_info)
         return;
@@ -138,8 +144,7 @@ void WayfireMenu::load_menu_item(AppInfo app_info)
         return;
     loaded_apps.insert({name, exec});
 
-    items.push_back(std::unique_ptr<WfMenuMenuItem>(
-                        new WfMenuMenuItem(this, app_info)));
+    items.push_back(std::make_unique<WfMenuMenuItem>(this, app_info));
     flowbox.add(*items.back());
 }
 
@@ -224,11 +229,6 @@ bool WayfireMenu::on_sort(Gtk::FlowBoxChild* a, Gtk::FlowBoxChild* b)
     return *b2 < *b1;
 }
 
-void WayfireMenu::on_popover_shown()
-{
-    flowbox.unselect_all();
-}
-
 bool WayfireMenu::update_icon()
 {
     std::string icon;
@@ -270,6 +270,7 @@ void WayfireMenu::update_popover_layout()
 
         flowbox.set_valign(Gtk::ALIGN_START);
         flowbox.set_homogeneous(true);
+        flowbox.set_selection_mode(Gtk::SELECTION_NONE);
         flowbox.set_sort_func(sigc::mem_fun(this, &WayfireMenu::on_sort));
         flowbox.set_filter_func(sigc::mem_fun(this, &WayfireMenu::on_filter));
 
@@ -306,48 +307,6 @@ void WayfireMenu::update_popover_layout()
     popover_layout_box.show_all();
 }
 
-void WayfireLogoutUI::on_logout_click()
-{
-    ui.hide();
-    bg.hide();
-    g_spawn_command_line_async(std::string(logout_command).c_str(), NULL);
-}
-
-void WayfireLogoutUI::on_reboot_click()
-{
-    ui.hide();
-    bg.hide();
-    g_spawn_command_line_async(std::string(reboot_command).c_str(), NULL);
-}
-
-void WayfireLogoutUI::on_shutdown_click()
-{
-    ui.hide();
-    bg.hide();
-    g_spawn_command_line_async(std::string(shutdown_command).c_str(), NULL);
-}
-
-void WayfireLogoutUI::on_suspend_click()
-{
-    ui.hide();
-    bg.hide();
-    g_spawn_command_line_async(std::string(suspend_command).c_str(), NULL);
-}
-
-void WayfireLogoutUI::on_hibernate_click()
-{
-    ui.hide();
-    bg.hide();
-    g_spawn_command_line_async(std::string(hibernate_command).c_str(), NULL);
-}
-
-void WayfireLogoutUI::on_switchuser_click()
-{
-    ui.hide();
-    bg.hide();
-    g_spawn_command_line_async(std::string(switchuser_command).c_str(), NULL);
-}
-
 void WayfireLogoutUI::on_cancel_click()
 {
     ui.hide();
@@ -357,7 +316,7 @@ void WayfireLogoutUI::on_cancel_click()
 #define LOGOUT_BUTTON_SIZE  125
 #define LOGOUT_BUTTON_MARGIN 10
 
-void WayfireLogoutUI::create_logout_ui_button(WayfireLogoutUIButton *button, const char *icon, const char *label)
+void WayfireLogoutUI::create_logout_ui_button(WayfireLogoutUIButton *button, const char *icon, const char *label, const WfOption<std::string> & command)
 {
     button->button.set_size_request(LOGOUT_BUTTON_SIZE, LOGOUT_BUTTON_SIZE);
     button->image.set_from_icon_name(icon, Gtk::ICON_SIZE_DIALOG);
@@ -365,38 +324,33 @@ void WayfireLogoutUI::create_logout_ui_button(WayfireLogoutUIButton *button, con
     button->layout.pack_start(button->image, true, false);
     button->layout.pack_start(button->label, true, false);
     button->button.add(button->layout);
+
+    button->button.signal_clicked().connect([&]
+    {
+        ui.hide();
+        bg.hide();
+        Glib::spawn_command_line_async(command.value());
+    });
 }
 
 WayfireLogoutUI::WayfireLogoutUI()
 {
-    create_logout_ui_button(&suspend, "emblem-synchronizing", "Suspend");
-    suspend.button.signal_clicked().connect_notify(
-        sigc::mem_fun(this, &WayfireLogoutUI::on_suspend_click));
+    create_logout_ui_button(&suspend, "emblem-synchronizing", "Suspend", suspend_command);
     top_layout.pack_start(suspend.button, true, false);
 
-    create_logout_ui_button(&hibernate, "weather-clear-night", "Hibernate");
-    hibernate.button.signal_clicked().connect_notify(
-        sigc::mem_fun(this, &WayfireLogoutUI::on_hibernate_click));
+    create_logout_ui_button(&hibernate, "weather-clear-night", "Hibernate", hibernate_command);
     top_layout.pack_start(hibernate.button, true, false);
 
-    create_logout_ui_button(&switchuser, "system-users", "Switch User");
-    switchuser.button.signal_clicked().connect_notify(
-        sigc::mem_fun(this, &WayfireLogoutUI::on_switchuser_click));
+    create_logout_ui_button(&switchuser, "system-users", "Switch User", switchuser_command);
     top_layout.pack_start(switchuser.button, true, false);
 
-    create_logout_ui_button(&logout, "system-log-out", "Log Out");
-    logout.button.signal_clicked().connect_notify(
-        sigc::mem_fun(this, &WayfireLogoutUI::on_logout_click));
+    create_logout_ui_button(&logout, "system-log-out", "Log Out", logout_command);
     middle_layout.pack_start(logout.button, true, false);
 
-    create_logout_ui_button(&reboot, "system-reboot", "Reboot");
-    reboot.button.signal_clicked().connect_notify(
-        sigc::mem_fun(this, &WayfireLogoutUI::on_reboot_click));
+    create_logout_ui_button(&reboot, "system-reboot", "Reboot", reboot_command);
     middle_layout.pack_start(reboot.button, true, false);
 
-    create_logout_ui_button(&shutdown, "system-shutdown", "Shut Down");
-    shutdown.button.signal_clicked().connect_notify(
-        sigc::mem_fun(this, &WayfireLogoutUI::on_shutdown_click));
+    create_logout_ui_button(&shutdown, "system-shutdown", "Shut Down", shutdown_command);
     middle_layout.pack_start(shutdown.button, true, false);
 
     cancel.button.set_size_request(100, 50);
@@ -478,8 +432,6 @@ void WayfireMenu::init(Gtk::HBox *container)
     button = std::make_unique<WayfireMenuButton> ("panel");
     button->add(main_image);
     button->get_popover()->set_constrain_to(Gtk::POPOVER_CONSTRAINT_NONE);
-    button->get_popover()->signal_show().connect_notify(
-        sigc::mem_fun(this, &WayfireMenu::on_popover_shown));
 
     if (!update_icon())
         return;

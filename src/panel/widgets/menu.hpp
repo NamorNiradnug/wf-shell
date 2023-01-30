@@ -15,19 +15,17 @@
 class WayfireMenu;
 using AppInfo = Glib::RefPtr<Gio::AppInfo>;
 
-class WfMenuMenuItem : public Gtk::HBox
+class WfMenuMenuItem : public Gtk::Button
 {
     public:
-    WfMenuMenuItem(WayfireMenu* menu, AppInfo app);
+    WfMenuMenuItem(WayfireMenu* menu, const AppInfo & app);
 
-    bool matches(Glib::ustring text);
-    bool fuzzy_match(Glib::ustring text);
+    bool matches(const Glib::ustring & pattern);
+    bool fuzzy_match(const Glib::ustring & pattern);
     bool operator < (const WfMenuMenuItem& other);
 
     private:
     WayfireMenu* menu;
-    Gtk::Box m_left_pad, m_right_pad;
-    Gtk::Button m_button;
     Gtk::VBox m_button_box;
     Gtk::Image m_image;
     Gtk::Label m_label;
@@ -67,13 +65,7 @@ class WayfireLogoutUI
     Gtk::VBox main_layout, vspacing_layout;
     Gtk::HBox top_layout, middle_layout, bottom_layout, hspacing_layout;
     void create_logout_ui_button(WayfireLogoutUIButton *button,
-        const char *icon, const char *label);
-    void on_logout_click();
-    void on_reboot_click();
-    void on_shutdown_click();
-    void on_suspend_click();
-    void on_hibernate_click();
-    void on_switchuser_click();
+        const char *icon, const char *label, const WfOption<std::string> & command);
     void on_cancel_click();
 };
 
@@ -92,7 +84,7 @@ class WayfireMenu : public WayfireWidget
     std::unique_ptr<WayfireMenuButton> button;
     std::unique_ptr<WayfireLogoutUI> logout_ui;
 
-    void load_menu_item(AppInfo app_info);
+    void load_menu_item(const AppInfo & app_info);
     void load_menu_items_from_dir(std::string directory);
     void load_menu_items_all();
 

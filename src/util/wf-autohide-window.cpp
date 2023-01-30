@@ -14,11 +14,10 @@
 
 WayfireAutohidingWindow::WayfireAutohidingWindow(WayfireOutput *output,
     const std::string& section) :
-    position{section + "/position"},
+    output(output), position{section + "/position"},
     y_position{WfOption<int>{section + "/autohide_duration"}},
     edge_offset{WfOption<int>{section + "/edge_offset"}}
 {
-    this->output = output;
     this->set_decorated(false);
     this->set_resizable(false);
 
@@ -42,6 +41,7 @@ WayfireAutohidingWindow::WayfireAutohidingWindow(WayfireOutput *output,
 
     this->signal_focus_out_event().connect_notify(
         [=] (const GdkEventFocus*) {
+            std::cout << "unfocus" << std::endl;
             if (this->active_button)
                 unset_active_popover(*this->active_button);
         });
@@ -62,7 +62,7 @@ wl_surface* WayfireAutohidingWindow::get_wl_surface() const
 }
 
 /** Verify that position is correct and return a correct position */
-static std::string check_position(std::string position)
+static std::string check_position(const std::string& position)
 {
     if (position == WF_WINDOW_POSITION_TOP)
         return WF_WINDOW_POSITION_TOP;
