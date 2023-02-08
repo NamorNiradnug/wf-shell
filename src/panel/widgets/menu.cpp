@@ -33,7 +33,6 @@ WfMenuMenuItem::WfMenuMenuItem(WayfireMenu* _menu, const AppInfo & app)
     */
 
     m_label.set_text(name);
-    m_label.set_max_width_chars(MAX_LAUNCHER_NAME_LENGTH);
     m_label.set_ellipsize(Pango::ELLIPSIZE_END);
     m_button_box.pack_start(m_image, false, false);
     m_button_box.pack_end(m_label, false, true);
@@ -268,6 +267,7 @@ void WayfireMenu::update_popover_layout()
     {
         button->get_popover()->add(popover_layout_box);
 
+        flowbox.set_min_children_per_line(4);
         flowbox.set_valign(Gtk::ALIGN_START);
         flowbox.set_homogeneous(true);
         flowbox.set_selection_mode(Gtk::SELECTION_NONE);
