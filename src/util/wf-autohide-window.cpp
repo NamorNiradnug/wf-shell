@@ -88,6 +88,7 @@ void WayfireAutohidingWindow::m_show_uncertain()
 {
     schedule_show(16); // add some delay to finish setting up the window
     /* And don't forget to hide the window afterwards, if autohide is enabled */
+    ++autohide_counter;
     if (should_autohide())
     {
         pending_hide = Glib::signal_timeout().connect([=] () {
