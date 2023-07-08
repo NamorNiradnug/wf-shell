@@ -27,6 +27,7 @@
 #include "widgets/volume.hpp"
 #endif
 #include "widgets/notifications/notification-center.hpp"
+#include "widgets/tray/tray.hpp"
 #include "widgets/window-list/window-list.hpp"
 
 #include "wf-autohide-window.hpp"
@@ -212,6 +213,8 @@ class WayfirePanel::impl
             return Widget(new WayfireWindowList(output));
         if (name == "notifications")
             return Widget(new WayfireNotificationCenter());
+        if (name == "tray")
+            return Widget(new WayfireStatusNotifier());
 
         std::string spacing = "spacing";
         if (name.find(spacing) == 0)
