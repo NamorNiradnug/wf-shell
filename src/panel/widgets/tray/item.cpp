@@ -1,6 +1,7 @@
 #include "item.hpp"
 
 #include <gtk-utils.hpp>
+#include <wf-autohide-window.hpp>
 
 #include <gtkmm/icontheme.h>
 #include <gtkmm/tooltip.h>
@@ -211,6 +212,18 @@ void StatusNotifierItem::init_menu()
     }
     menu = std::move(*Glib::wrap(GTK_MENU(raw_menu)));
     menu->attach_to_widget(*this);
+    menu->signal_popped_up().connect([this](auto &&...) {
+        Gtk::Widget *window = this;
+        while (window->get_parent())
+            window = window->get_parent();
+        dynamic_cast<WayfireAutohidingWindow *>(window)->increase_autohide_block();
+    });
+    menu->signal_deactivate().connect([this] {
+        Gtk::Widget *window = this;
+        while (window->get_parent())
+            window = window->get_parent();
+        dynamic_cast<WayfireAutohidingWindow *>(window)->decrease_autohide_block();
+    });
 }
 
 void StatusNotifierItem::handle_signal(const Glib::ustring &signal, const Glib::VariantContainerBase &params)

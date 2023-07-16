@@ -44,6 +44,10 @@ class WayfireAutohidingWindow : public Gtk::Window
     void increase_autohide();
     /* Remove one autohide request */
     void decrease_autohide();
+    /* Add one more autohide block */
+    void increase_autohide_block();
+    /* Remove one autohide blocl */
+    void decrease_autohide_block();
     /* Returns true if the window should autohide */
     bool should_autohide() const;
 
@@ -99,6 +103,7 @@ class WayfireAutohidingWindow : public Gtk::Window
     bool m_do_show();
     bool m_do_hide();
     int autohide_counter = static_cast<int>(autohide_opt);
+    int autohide_block_counter = 0;
 
     /** Show the window but hide if no pointer input */
     void m_show_uncertain();

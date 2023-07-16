@@ -242,9 +242,22 @@ void WayfireAutohidingWindow::decrease_autohide()
         schedule_show(0);
 }
 
+void WayfireAutohidingWindow::increase_autohide_block()
+{
+    ++autohide_block_counter;
+    schedule_show(0);
+}
+
+void WayfireAutohidingWindow::decrease_autohide_block()
+{
+    autohide_block_counter = std::max(0, autohide_block_counter - 1);
+    if (should_autohide())
+        schedule_hide(0);
+}
+
 bool WayfireAutohidingWindow::should_autohide() const
 {
-    return autohide_counter && !this->active_button && !this->input_inside_panel;
+    return autohide_counter && autohide_block_counter == 0 && !this->active_button && !this->input_inside_panel;
 }
 
 bool WayfireAutohidingWindow::m_do_hide()
