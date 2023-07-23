@@ -4,7 +4,7 @@
 #include "../widget.hpp"
 #include "wf-popover.hpp"
 #include <giomm/desktopappinfo.h>
-#include <gtkmm/entry.h>
+#include <gtkmm/searchentry.h>
 #include <gtkmm/image.h>
 #include <gtkmm/window.h>
 #include <gtkmm/flowbox.h>
@@ -15,7 +15,7 @@
 class WayfireMenu;
 using AppInfo = Glib::RefPtr<Gio::AppInfo>;
 
-class WfMenuMenuItem : public Gtk::Button
+class WfMenuMenuItem : public Gtk::VBox
 {
     public:
     WfMenuMenuItem(WayfireMenu* menu, const AppInfo & app);
@@ -23,24 +23,21 @@ class WfMenuMenuItem : public Gtk::Button
     bool matches(const Glib::ustring & pattern);
     bool fuzzy_match(const Glib::ustring & pattern);
     bool operator < (const WfMenuMenuItem& other);
+    void activate();
 
     private:
     WayfireMenu* menu;
-    Gtk::VBox m_button_box;
-    Gtk::Image m_image;
-    Gtk::Label m_label;
-
+    Gtk::Image image;
+    Gtk::Label label;
     AppInfo m_app_info;
-    void on_click();
 };
 
-class WayfireLogoutUIButton
+class WayfireLogoutUIButton : public Gtk::Button
 {
     public:
     Gtk::VBox layout;
     Gtk::Image image;
     Gtk::Label label;
-    Gtk::Button button;
 };
 
 class WayfireLogoutUI
@@ -64,8 +61,8 @@ class WayfireLogoutUI
     WayfireLogoutUIButton cancel;
     Gtk::VBox main_layout, vspacing_layout;
     Gtk::HBox top_layout, middle_layout, bottom_layout, hspacing_layout;
-    void create_logout_ui_button(WayfireLogoutUIButton *button,
-        const char *icon, const char *label, const WfOption<std::string> & command);
+    void create_logout_ui_button(WayfireLogoutUIButton& button,
+        const char *icon, const char *label, const WfOption<std::string>& command, Gtk::Box& layout);
     void on_cancel_click();
 };
 
@@ -77,7 +74,7 @@ class WayfireMenu : public WayfireWidget
     Gtk::VBox popover_layout_box;
     Gtk::Separator separator;
     Gtk::Image main_image;
-    Gtk::Entry search_box;
+    Gtk::SearchEntry search_entry;
     Gtk::FlowBox flowbox;
     Gtk::Button logout_button;
     Gtk::ScrolledWindow scrolled_window;
