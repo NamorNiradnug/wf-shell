@@ -138,7 +138,8 @@
 	</option>
 	<option name="battery_icon_size" type="int">
 		<_short>Battery Icon Size</_short>
-		<default>24</default>
+		<default>32</default>
+		<min>1</min>
 	</option>
 	<option name="battery_icon_invert" type="bool">
 		<_short>Battery Icon Invert Color</_short>
@@ -176,6 +177,7 @@
 	<option name="network_icon_size" type="int">
 		<_short>Network Icon Size</_short>
 		<default>32</default>
+		<min>1</min>
 	</option>
 	<option name="network_icon_invert_color" type="bool">
 		<_short>Network Icon Invert Color</_short>
@@ -249,6 +251,11 @@
 		<_short>Volume Display Timeout</_short>
 		<default>2.5</default>
 	</option>
+	<option name="volume_icon_size" type="int">
+		<_short>Volume Icon Size</_short>
+		<default>32</default>
+		<min>1</min>
+	</option>
 	</group>
 	<group>
 	<_short>Notifications</_short>
@@ -261,6 +268,11 @@
 		<_short>Always Show Critical notifications</_short>
 		<_long>Makes critical notifications to be shown even in DND mode.</_long>
 		<default>true</default>
+	</option>
+	<option name="notifications_icon_size" type="int">
+		<_short>Notifications Icon Size</_short>
+		<default>32</default>
+		<min>1</min>
 	</option>
 	</group>
 	<group>
