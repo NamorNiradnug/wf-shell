@@ -208,6 +208,7 @@ class WayfirePanel::impl
 
     void reload_widgets(const std::string &list, WidgetContainer &container, Gtk::HBox &box)
     {
+        const auto lock_sn_watcher = Watcher::Instance();
         container.clear();
         auto widgets = tokenize(list);
         for (const auto &widget_name : widgets)
