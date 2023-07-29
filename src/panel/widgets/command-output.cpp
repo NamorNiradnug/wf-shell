@@ -1,28 +1,33 @@
 #include "command-output.hpp"
 
 #include <glibmm/main.h>
-#include <glibmm/spawn.h>
 #include <glibmm/shell.h>
+#include <glibmm/spawn.h>
+
+#include <gtkmm/tooltip.h>
 
 #include <gtk-utils.hpp>
 
 WfCommandOutputButtons::CommandOutput::CommandOutput(const std::string & name,
-    const std::string & command,
-    const std::string & icon_name, int period, int icon_size,
-    const std::string& icon_position)
+    const std::string & command, const std::string & tooltip_command, int period,
+    const std::string & icon_name, int icon_size,
+    const std::string & icon_position)
 {
     if (icon_size > 0)
     {
         set_image_icon(icon, icon_name, icon_size, {});
     }
 
-    output.set_ellipsize(Pango::ELLIPSIZE_END);
-    output.set_max_width_chars(max_chars_opt);
-    max_chars_opt.set_callback([=] { output.set_max_width_chars(max_chars_opt); });
-    output.set_alignment(Gtk::ALIGN_CENTER);
+    main_label.set_ellipsize(Pango::ELLIPSIZE_END);
+    main_label.set_max_width_chars(max_chars_opt);
+    max_chars_opt.set_callback([=]
+    {
+        main_label.set_max_width_chars(max_chars_opt);
+    });
+    main_label.set_alignment(Gtk::ALIGN_CENTER);
     max_chars_opt.set_callback([this]
     {
-        output.set_max_width_chars(max_chars_opt);
+        main_label.set_max_width_chars(max_chars_opt);
     });
 
     box.set_spacing(5);
@@ -34,12 +39,12 @@ WfCommandOutputButtons::CommandOutput::CommandOutput(const std::string & name,
 
     if ((icon_position == "right") || (icon_position == "bottom"))
     {
-        box.pack_start(output);
+        box.pack_start(main_label);
         box.pack_start(icon);
     } else
     {
         box.pack_start(icon);
-        box.pack_start(output);
+        box.pack_start(main_label);
     }
 
     if (icon_name.empty())
@@ -54,18 +59,17 @@ WfCommandOutputButtons::CommandOutput::CommandOutput(const std::string & name,
     const auto update_output = [=] ()
     {
         Glib::Pid pid;
-        int std_out;
-        Glib::spawn_async_with_pipes("", Glib::shell_parse_argv(
-            command), Glib::SPAWN_DO_NOT_REAP_CHILD | Glib::SPAWN_SEARCH_PATH_FROM_ENVP,
-            Glib::SlotSpawnChildSetup{},
-            &pid, nullptr, &std_out, nullptr);
-        Glib::signal_child_watch().connect([std_out, this] (
+        int output_fd;
+        Glib::spawn_async_with_pipes("", Glib::shell_parse_argv(command),
+            Glib::SPAWN_DO_NOT_REAP_CHILD | Glib::SPAWN_SEARCH_PATH_FROM_ENVP,
+            Glib::SlotSpawnChildSetup{}, &pid, nullptr, &output_fd, nullptr);
+        Glib::signal_child_watch().connect([=] (
             Glib::Pid pid,
             int child_status)
         {
-            FILE *file = fdopen(std_out, "r");
+            FILE *file = fdopen(output_fd, "r");
             // "times 4" to support Unicode symbols
-            auto *buf  = new char [max_chars_opt.value() * 4 + 1];
+            auto *buf = new char [max_chars_opt.value() * 4 + 1];
             std::fgets(buf, max_chars_opt.value() * 4 + 1, file);
             Glib::ustring output_str(buf);
             delete[] buf;
@@ -77,7 +81,7 @@ WfCommandOutputButtons::CommandOutput::CommandOutput(const std::string & name,
                 output_str.erase(std::prev(output_str.end()));
             }
 
-            output.set_text(output_str);
+            main_label.set_text(output_str);
         }, pid);
     };
 
@@ -95,6 +99,55 @@ WfCommandOutputButtons::CommandOutput::CommandOutput(const std::string & name,
     if (period != -1)
     {
         update_output();
+    }
+
+    const auto update_tooltip = [=]
+    {
+        if (std::time(nullptr) - last_tooltip_update < 1)
+        {
+            return;
+        }
+
+        std::time(&last_tooltip_update);
+        Glib::Pid pid;
+        int output_fd;
+        Glib::spawn_async_with_pipes("", Glib::shell_parse_argv(tooltip_command),
+            Glib::SPAWN_DO_NOT_REAP_CHILD | Glib::SPAWN_SEARCH_PATH_FROM_ENVP,
+            Glib::SlotSpawnChildSetup{}, &pid, nullptr, &output_fd, nullptr);
+        Glib::signal_child_watch().connect([=] (Glib::Pid pid, int exit_status)
+        {
+            FILE *file = fdopen(output_fd, "r");
+            Glib::ustring tooltip_text;
+            std::array<char, 16> buffer;
+
+            while (std::fgets(buffer.data(), buffer.size(), file))
+            {
+                tooltip_text += buffer.data();
+            }
+
+            std::fclose(file);
+            Glib::spawn_close_pid(pid);
+
+            while (!tooltip_text.empty() && std::isspace(*tooltip_text.rbegin()))
+            {
+                tooltip_text.erase(std::prev(tooltip_text.end()));
+            }
+
+            tooltip_label.set_markup(tooltip_text);
+        }, pid);
+    };
+
+    if (!tooltip_command.empty())
+    {
+        set_has_tooltip();
+        tooltip_label.show();
+        signal_query_tooltip().connect([=] (int, int, bool,
+                                            const Glib::RefPtr<Gtk::Tooltip>& tooltip)
+        {
+            update_tooltip();
+            tooltip->set_custom(tooltip_label);
+            return true;
+        });
     }
 }
 
