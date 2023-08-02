@@ -78,7 +78,7 @@ WfSingleNotification::WfSingleNotification(const Notification &notification)
     close_button.add(close_image);
     close_button.get_style_context()->add_class("flat");
     close_button.signal_clicked().connect(
-        [=] { Daemon::closeNotification(notification.id, Daemon::CloseReason::Dismissed); });
+        [=] { Daemon::Instance()->closeNotification(notification.id, Daemon::CloseReason::Dismissed); });
     top_bar.pack_start(close_button, false, true);
     top_bar.set_spacing(5);
 
@@ -125,7 +125,7 @@ WfSingleNotification::WfSingleNotification(const Notification &notification)
             {
                 auto action_button = Glib::RefPtr<Gtk::Button>(new Gtk::Button(notification.actions[i + 1]));
                 action_button->signal_clicked().connect(
-                    [id = notification.id, action_key] { Daemon::invokeAction(id, action_key); });
+                    [id = notification.id, action_key] { Daemon::Instance()->invokeAction(id, action_key); });
                 actions.add(*action_button.get());
             }
             else
@@ -134,7 +134,7 @@ WfSingleNotification::WfSingleNotification(const Notification &notification)
                     [id = notification.id, action_key](GdkEventButton *ev) {
                         if (ev->button == GDK_BUTTON_PRIMARY)
                         {
-                            Daemon::invokeAction(id, action_key);
+                            Daemon::Instance()->invokeAction(id, action_key);
                             return false;
                         }
                         return true;
