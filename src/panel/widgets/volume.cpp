@@ -10,19 +10,22 @@ WayfireVolumeScale::WayfireVolumeScale()
 {
     this->signal_draw().connect_notify(
         [=] (const Cairo::RefPtr<Cairo::Context>& ctx)
+    {
+        if (this->current_volume.running())
         {
-            if (this->current_volume.running())
-            {
-                value_changed.block();
-                this->set_value(this->current_volume);
-                value_changed.unblock();
-            }
-        }, true);
+            value_changed.block();
+            this->set_value(this->current_volume);
+            value_changed.unblock();
+        }
+    }, true);
 
-    value_changed = this->signal_value_changed().connect_notify([=] () {
+    value_changed = this->signal_value_changed().connect_notify([=] ()
+    {
         this->current_volume.animate(this->get_value(), this->get_value());
         if (this->user_changed_callback)
+        {
             this->user_changed_callback();
+        }
     });
 }
 
@@ -43,25 +46,31 @@ void WayfireVolumeScale::set_user_changed_callback(
     this->user_changed_callback = callback;
 }
 
-enum VolumeLevel {
+enum VolumeLevel
+{
     VOLUME_LEVEL_MUTE = 0,
     VOLUME_LEVEL_LOW,
     VOLUME_LEVEL_MED,
     VOLUME_LEVEL_HIGH,
-    VOLUME_LEVEL_OOR /* Out of range */
+    VOLUME_LEVEL_OOR, /* Out of range */
 };
 
 static VolumeLevel get_volume_level(pa_volume_t volume, pa_volume_t max)
 {
     auto third = max / 3;
     if (volume == 0)
+    {
         return VOLUME_LEVEL_MUTE;
-    else if (volume > 0 && volume <= third)
+    } else if ((volume > 0) && (volume <= third))
+    {
         return VOLUME_LEVEL_LOW;
-    else if (volume > third && volume <= (third * 2))
+    } else if ((volume > third) && (volume <= (third * 2)))
+    {
         return VOLUME_LEVEL_MED;
-    else if (volume > (third * 2) && volume <= max)
+    } else if ((volume > (third * 2)) && (volume <= max))
+    {
         return VOLUME_LEVEL_HIGH;
+    }
 
     return VOLUME_LEVEL_OOR;
 }
@@ -97,7 +106,9 @@ void WayfireVolume::check_set_popover_timeout()
 {
     popover_timeout.disconnect();
     if (this->button->is_popover_focused())
+    {
         return;
+    }
 
     popover_timeout = Glib::signal_timeout().connect(sigc::bind(sigc::mem_fun(*this,
         &WayfireVolume::on_popover_timeout), 0), timeout * 1000);
@@ -127,15 +138,15 @@ void WayfireVolume::on_volume_scroll(GdkEventScroll *event)
     const int32_t adjustment_step = max_norm * INCREMENT_STEP_PC;
 
     /* Adjust volume on button scroll */
-    if (event->direction == GDK_SCROLL_UP ||
-        (event->direction == GDK_SCROLL_SMOOTH && event->delta_y < 0))
+    if ((event->direction == GDK_SCROLL_UP) ||
+        ((event->direction == GDK_SCROLL_SMOOTH) && (event->delta_y < 0)))
     {
         button->set_keyboard_interactive(false);
         set_volume(std::min(current_volume + adjustment_step, (int32_t)max_norm));
     }
 
-    if (event->direction == GDK_SCROLL_DOWN ||
-        (event->direction == GDK_SCROLL_SMOOTH && event->delta_y > 0))
+    if ((event->direction == GDK_SCROLL_DOWN) ||
+        ((event->direction == GDK_SCROLL_SMOOTH) && (event->delta_y > 0)))
     {
         button->set_keyboard_interactive(false);
         set_volume(std::max(current_volume - adjustment_step, 0));
@@ -145,14 +156,17 @@ void WayfireVolume::on_volume_scroll(GdkEventScroll *event)
     check_set_popover_timeout();
 }
 
-void WayfireVolume::on_volume_button_press(GdkEventButton* event)
+void WayfireVolume::on_volume_button_press(GdkEventButton *event)
 {
-    if (event->button == 2 && event->type == GDK_BUTTON_PRESS) {
+    if ((event->button == 2) && (event->type == GDK_BUTTON_PRESS))
+    {
         /* Toggle mute on middle click */
-        if (gvc_mixer_stream_get_is_muted(gvc_stream)) {
+        if (gvc_mixer_stream_get_is_muted(gvc_stream))
+        {
             gvc_mixer_stream_change_is_muted(gvc_stream, false);
             gvc_mixer_stream_set_is_muted(gvc_stream, false);
-        } else {
+        } else
+        {
             gvc_mixer_stream_change_is_muted(gvc_stream, true);
             gvc_mixer_stream_set_is_muted(gvc_stream, true);
         }
@@ -180,49 +194,59 @@ void WayfireVolume::on_muted_changed_external()
     update_icon();
     button->set_keyboard_interactive(false);
     if (!button->get_popover()->is_visible())
+    {
         button->get_popover()->popup();
+    }
+
     check_set_popover_timeout();
 }
 
 static void notify_volume(GvcMixerControl *gvc_control,
     guint id, gpointer user_data)
 {
-    WayfireVolume *wf_volume = (WayfireVolume *) user_data;
+    WayfireVolume *wf_volume = (WayfireVolume*)user_data;
     wf_volume->on_volume_changed_external();
 }
 
 static void notify_is_muted(GvcMixerControl *gvc_control,
     guint id, gpointer user_data)
 {
-    WayfireVolume *wf_volume = (WayfireVolume *) user_data;
+    WayfireVolume *wf_volume = (WayfireVolume*)user_data;
     wf_volume->on_muted_changed_external();
 }
 
 void WayfireVolume::disconnect_gvc_stream_signals()
 {
     if (notify_volume_signal)
+    {
         g_signal_handler_disconnect(gvc_stream, notify_volume_signal);
+    }
+
     notify_volume_signal = 0;
 
     if (notify_is_muted_signal)
+    {
         g_signal_handler_disconnect(gvc_stream, notify_is_muted_signal);
+    }
+
     notify_is_muted_signal = 0;
 }
 
 void WayfireVolume::on_default_sink_changed()
 {
     gvc_stream = gvc_mixer_control_get_default_sink(gvc_control);
-    if (!gvc_stream) {
+    if (!gvc_stream)
+    {
         printf("GVC: Failed to get default sink\n");
         return;
     }
 
     /* Reconnect signals to new sink */
     disconnect_gvc_stream_signals();
-    notify_volume_signal = g_signal_connect (gvc_stream, "notify::volume",
-        G_CALLBACK (notify_volume), this);
-    notify_is_muted_signal = g_signal_connect (gvc_stream, "notify::is-muted",
-        G_CALLBACK (notify_is_muted), this);
+    notify_volume_signal = g_signal_connect(gvc_stream, "notify::volume",
+        G_CALLBACK(notify_volume), this);
+    notify_is_muted_signal = g_signal_connect(gvc_stream, "notify::is-muted",
+        G_CALLBACK(notify_is_muted), this);
 
     /* Update the scale attributes */
     max_norm = gvc_mixer_control_get_vol_max_norm(gvc_control);
@@ -235,11 +259,10 @@ void WayfireVolume::on_default_sink_changed()
     set_volume(gvc_mixer_stream_get_volume(gvc_stream), VOLUME_FLAG_NO_ACTION);
 }
 
-
-static void default_sink_changed (GvcMixerControl *gvc_control,
+static void default_sink_changed(GvcMixerControl *gvc_control,
     guint id, gpointer user_data)
 {
-    WayfireVolume *wf_volume = (WayfireVolume *) user_data;
+    WayfireVolume *wf_volume = (WayfireVolume*)user_data;
     wf_volume->on_default_sink_changed();
 }
 
@@ -255,7 +278,7 @@ void WayfireVolume::init(Gtk::HBox *container)
     icon_size.set_callback([=] () { update_icon(); });
 
     /* Setup button */
-    button = std::make_unique<WayfireMenuButton> ("panel");
+    button = std::make_unique<WayfireMenuButton>("panel");
     auto style = button->get_style_context();
     style->context_save();
     style->set_state(Gtk::STATE_FLAG_NORMAL & ~Gtk::STATE_FLAG_PRELIGHT);
@@ -282,8 +305,8 @@ void WayfireVolume::init(Gtk::HBox *container)
 
     /* Setup gvc control */
     gvc_control = gvc_mixer_control_new("wf-shell volume control");
-    notify_default_sink_changed = g_signal_connect (gvc_control,
-        "default-sink-changed", G_CALLBACK (default_sink_changed), this);
+    notify_default_sink_changed = g_signal_connect(gvc_control,
+        "default-sink-changed", G_CALLBACK(default_sink_changed), this);
     gvc_mixer_control_open(gvc_control);
 
     /* Setup layout */
@@ -299,7 +322,9 @@ WayfireVolume::~WayfireVolume()
     disconnect_gvc_stream_signals();
 
     if (notify_default_sink_changed)
+    {
         g_signal_handler_disconnect(gvc_control, notify_default_sink_changed);
+    }
 
     gvc_mixer_control_close(gvc_control);
     g_object_unref(gvc_control);

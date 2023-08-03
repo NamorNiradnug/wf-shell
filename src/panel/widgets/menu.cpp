@@ -17,10 +17,10 @@
 
 const std::string default_icon = ICONDIR "/wayfire.png";
 
-WfMenuMenuItem::WfMenuMenuItem(WayfireMenu* _menu, const AppInfo & app)
-    : menu(_menu), m_app_info(app)
+WfMenuMenuItem::WfMenuMenuItem(WayfireMenu *_menu, const AppInfo & app) :
+    menu(_menu), m_app_info(app)
 {
-    image.set((const Glib::RefPtr<const Gio::Icon>&) app->get_icon(), Gtk::ICON_SIZE_LARGE_TOOLBAR);
+    image.set((const Glib::RefPtr<const Gio::Icon>&)app->get_icon(), Gtk::ICON_SIZE_LARGE_TOOLBAR);
     image.set_pixel_size(48);
 
     label.set_text(app->get_name());
@@ -45,7 +45,7 @@ void WfMenuMenuItem::activate()
 static bool fuzzy_match(const Glib::ustring& text, const Glib::ustring& pattern)
 {
     size_t i = 0, // next character in pattern to match
-           j = 0; // the first unmatched character in text
+        j    = 0; // the first unmatched character in text
 
     while (i < pattern.length() && j < text.length())
     {
@@ -54,8 +54,7 @@ static bool fuzzy_match(const Glib::ustring& text, const Glib::ustring& pattern)
         {
             ++i;
             ++j;
-        }
-        else
+        } else
         {
             /* Try to match current unmatched character in pattern with the next
              * character in text */
@@ -71,54 +70,63 @@ bool WfMenuMenuItem::fuzzy_match(const Glib::ustring & pattern)
 {
     Glib::ustring name = m_app_info->get_name();
     Glib::ustring long_name = m_app_info->get_display_name();
-    Glib::ustring progr = m_app_info->get_executable();
+    Glib::ustring progr     = m_app_info->get_executable();
 
     auto pattern_lower = pattern.lowercase();
 
-    return ::fuzzy_match(progr.lowercase(), pattern_lower)
-        || ::fuzzy_match(name.lowercase(), pattern_lower)
-        || ::fuzzy_match(long_name.lowercase(), pattern_lower);
+    return ::fuzzy_match(progr.lowercase(), pattern_lower) ||
+           ::fuzzy_match(name.lowercase(), pattern_lower) ||
+           ::fuzzy_match(long_name.lowercase(), pattern_lower);
 }
 
 bool WfMenuMenuItem::matches(const Glib::ustring & pattern)
 {
     Glib::ustring name = m_app_info->get_name();
     Glib::ustring long_name = m_app_info->get_display_name();
-    Glib::ustring progr = m_app_info->get_executable();
-    Glib::ustring descr = m_app_info->get_description();
+    Glib::ustring progr     = m_app_info->get_executable();
+    Glib::ustring descr     = m_app_info->get_description();
 
-    Glib::ustring text = name.lowercase() + "$"
-        + long_name.lowercase() + "$" + progr.lowercase() + "$"
-        + descr.lowercase();
+    Glib::ustring text = name.lowercase() + "$" +
+        long_name.lowercase() + "$" + progr.lowercase() + "$" +
+        descr.lowercase();
 
     return text.find(pattern.lowercase()) != Glib::ustring::npos;
 }
 
-bool WfMenuMenuItem::operator < (const WfMenuMenuItem& other)
+bool WfMenuMenuItem::operator <(const WfMenuMenuItem& other)
 {
-    return Glib::ustring(m_app_info->get_name()).lowercase()
-        < Glib::ustring(other.m_app_info->get_name()).lowercase();
+    return Glib::ustring(m_app_info->get_name()).lowercase() <
+           Glib::ustring(other.m_app_info->get_name()).lowercase();
 }
 
 void WayfireMenu::load_menu_item(const AppInfo & app_info)
 {
     if (!app_info)
+    {
         return;
+    }
 
     auto desktop_app_info = Glib::RefPtr<Gio::DesktopAppInfo>::cast_dynamic(app_info);
     if (desktop_app_info && desktop_app_info->get_nodisplay())
+    {
         return;
+    }
 
     auto name = app_info->get_name();
     auto exec = app_info->get_executable();
     /* If we don't have the following, then the entry won't be useful anyway,
      * so we should skip it */
     if (name.empty() || !app_info->get_icon() || exec.empty())
+    {
         return;
+    }
 
     /* Already created such a launcher, skip */
     if (loaded_apps.count({name, exec}))
+    {
         return;
+    }
+
     loaded_apps.insert({name, exec});
 
     items.push_back(std::make_unique<WfMenuMenuItem>(this, app_info));
@@ -128,7 +136,9 @@ void WayfireMenu::load_menu_item(const AppInfo & app_info)
 static bool ends_with(std::string text, std::string pattern)
 {
     if (text.length() < pattern.length())
+    {
         return false;
+    }
 
     return text.substr(text.length() - pattern.length()) == pattern;
 }
@@ -138,7 +148,9 @@ void WayfireMenu::load_menu_items_from_dir(std::string path)
     /* Expand path */
     auto dir = opendir(path.c_str());
     if (!dir)
+    {
         return;
+    }
 
     /* Iterate over all files in the directory */
     dirent *file;
@@ -146,12 +158,16 @@ void WayfireMenu::load_menu_items_from_dir(std::string path)
     {
         /* Skip hidden files and folders */
         if (file->d_name[0] == '.')
+        {
             continue;
+        }
 
         auto fullpath = path + "/" + file->d_name;
 
         if (ends_with(fullpath, ".desktop"))
+        {
             load_menu_item(Gio::DesktopAppInfo::create_from_filename(fullpath));
+        }
     }
 }
 
@@ -160,19 +176,21 @@ void WayfireMenu::load_menu_items_all()
     std::string home_dir = getenv("HOME");
     auto app_list = Gio::AppInfo::get_all();
     for (auto app : app_list)
+    {
         load_menu_item(app);
+    }
 
     load_menu_items_from_dir(home_dir + "/Desktop");
 }
 
 void WayfireMenu::on_search_changed()
 {
-    fuzzy_filter = false;
+    fuzzy_filter  = false;
     count_matches = 0;
     flowbox.invalidate_filter();
 
     /* We got no matches, try to fuzzy-match */
-    if (count_matches <= 0 && fuzzy_search_enabled)
+    if ((count_matches <= 0) && fuzzy_search_enabled)
     {
         fuzzy_filter = true;
         flowbox.invalidate_filter();
@@ -181,7 +199,7 @@ void WayfireMenu::on_search_changed()
 
 bool WayfireMenu::on_filter(Gtk::FlowBoxChild *child)
 {
-    auto button = dynamic_cast<WfMenuMenuItem*> (child->get_child());
+    auto button = dynamic_cast<WfMenuMenuItem*>(child->get_child());
     assert(button);
 
     auto text = search_entry.get_text();
@@ -197,10 +215,10 @@ bool WayfireMenu::on_filter(Gtk::FlowBoxChild *child)
     return false;
 }
 
-bool WayfireMenu::on_sort(Gtk::FlowBoxChild* a, Gtk::FlowBoxChild* b)
+bool WayfireMenu::on_sort(Gtk::FlowBoxChild *a, Gtk::FlowBoxChild *b)
 {
-    auto b1 = dynamic_cast<WfMenuMenuItem*> (a->get_child());
-    auto b2 = dynamic_cast<WfMenuMenuItem*> (b->get_child());
+    auto b1 = dynamic_cast<WfMenuMenuItem*>(a->get_child());
+    auto b2 = dynamic_cast<WfMenuMenuItem*>(b->get_child());
     assert(b1 && b2);
 
     return *b2 < *b1;
@@ -215,11 +233,10 @@ bool WayfireMenu::update_icon()
 {
     std::string icon;
     int size = menu_size / LAUNCHERS_ICON_SCALE;
-    if (((std::string) menu_icon).empty())
+    if (((std::string)menu_icon).empty())
     {
         icon = default_icon;
-    }
-    else
+    } else
     {
         icon = menu_icon;
     }
@@ -237,7 +254,9 @@ bool WayfireMenu::update_icon()
     }
 
     if (!ptr_pbuff)
+    {
         return false;
+    }
 
     set_image_pixbuf(main_image, ptr_pbuff, main_image.get_scale_factor());
     return true;
@@ -256,8 +275,9 @@ void WayfireMenu::update_popover_layout()
         flowbox.set_min_children_per_line(4);
         flowbox.set_min_children_per_line(4);
         flowbox.set_selection_mode(Gtk::SELECTION_BROWSE);
-        flowbox.signal_child_activated().connect_notify([](Gtk::FlowBoxChild* child) {
-            auto* menu_item = dynamic_cast<WfMenuMenuItem *>(child->get_child());
+        flowbox.signal_child_activated().connect_notify([] (Gtk::FlowBoxChild *child)
+        {
+            auto *menu_item = dynamic_cast<WfMenuMenuItem*>(child->get_child());
             if (menu_item != nullptr)
             {
                 menu_item->activate();
@@ -276,8 +296,8 @@ void WayfireMenu::update_popover_layout()
         search_entry.property_margin().set_value(20);
         search_entry.signal_search_changed().connect_notify(
             sigc::mem_fun(this, &WayfireMenu::on_search_changed));
-        popover_layout_box.signal_key_press_event().connect(sigc::mem_fun(search_entry, &Gtk::SearchEntry::handle_event));
-
+        popover_layout_box.signal_key_press_event().connect(sigc::mem_fun(search_entry,
+            &Gtk::SearchEntry::handle_event));
     } else
     {
         /* Layout was already initialized, make sure to remove widgets before
@@ -308,7 +328,8 @@ void WayfireLogoutUI::on_cancel_click()
 #define LOGOUT_BUTTON_SIZE  125
 #define LOGOUT_BUTTON_MARGIN 10
 
-void WayfireLogoutUI::create_logout_ui_button(WayfireLogoutUIButton& button, const char *icon, const char *label,
+void WayfireLogoutUI::create_logout_ui_button(WayfireLogoutUIButton& button, const char *icon,
+    const char *label,
     const WfOption<std::string>& command, Gtk::Box& layout)
 {
     button.set_size_request(LOGOUT_BUTTON_SIZE, LOGOUT_BUTTON_SIZE);
@@ -317,7 +338,8 @@ void WayfireLogoutUI::create_logout_ui_button(WayfireLogoutUIButton& button, con
     button.layout.pack_start(button.image, true, false);
     button.layout.pack_start(button.label, true, false);
     button.add(button.layout);
-    button.signal_clicked().connect([=, &command] {
+    button.signal_clicked().connect([=, &command]
+    {
         bg.hide();
         ui.hide();
         Glib::spawn_command_line_async(command);
@@ -359,7 +381,7 @@ WayfireLogoutUI::WayfireLogoutUI()
     gtk_layer_set_layer(ui.gobj(), GTK_LAYER_SHELL_LAYER_OVERLAY);
     ui.add(vspacing_layout);
     bg.set_opacity(0.5);
-    auto css_provider = Gtk::CssProvider::create();
+    auto css_provider  = Gtk::CssProvider::create();
     auto style_context = Gtk::StyleContext::create();
     bg.set_name("logout_background");
     css_provider->load_from_data("window#logout_background { background-color: black; }");
@@ -394,13 +416,14 @@ void WayfireMenu::refresh()
     {
         gtk_widget_destroy(GTK_WIDGET(child->gobj()));
     }
+
     load_menu_items_all();
     flowbox.show_all();
 }
 
 static void app_info_changed(GAppInfoMonitor *gappinfomonitor, gpointer user_data)
 {
-    WayfireMenu *menu = (WayfireMenu *) user_data;
+    WayfireMenu *menu = (WayfireMenu*)user_data;
 
     menu->refresh();
 }
@@ -411,17 +434,20 @@ void WayfireMenu::init(Gtk::HBox *container)
     menu_size.set_callback([=] () { update_icon(); });
     panel_position.set_callback([=] () { update_popover_layout(); });
 
-    button = std::make_unique<WayfireMenuButton> ("panel");
+    button = std::make_unique<WayfireMenuButton>("panel");
     button->add(main_image);
     button->get_popover()->set_constrain_to(Gtk::POPOVER_CONSTRAINT_NONE);
     button->get_popover()->signal_show().connect_notify(
         sigc::mem_fun(this, &WayfireMenu::on_popover_shown));
-    button->get_popover()->signal_hide().connect_notify([this] {
+    button->get_popover()->signal_hide().connect_notify([this]
+    {
         search_entry.set_text("");
     });
 
     if (!update_icon())
+    {
         return;
+    }
 
     button->property_scale_factor().signal_changed().connect(
         [=] () { update_icon(); });
@@ -444,7 +470,8 @@ void WayfireMenu::init(Gtk::HBox *container)
     update_popover_layout();
 
     GAppInfoMonitor *app_info_monitor = g_app_info_monitor_get();
-    app_info_monitor_connection = g_signal_connect(app_info_monitor, "changed", G_CALLBACK(app_info_changed), this);
+    app_info_monitor_connection = g_signal_connect(app_info_monitor, "changed", G_CALLBACK(
+        app_info_changed), this);
 
     hbox.show();
     main_image.show();

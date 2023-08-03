@@ -23,17 +23,18 @@ enum WayfireToplevelState
  * It displays the window icon on all outputs' docks that it is visible on */
 class WayfireToplevel
 {
-    public:
+  public:
     WayfireToplevel(WayfireWindowList *window_list, zwlr_foreign_toplevel_handle_v1 *handle);
 
     uint32_t get_state();
-    zwlr_foreign_toplevel_handle_v1 * get_parent();
-    void set_parent(zwlr_foreign_toplevel_handle_v1 *);
-    std::vector<zwlr_foreign_toplevel_handle_v1 *>& get_children();
+    zwlr_foreign_toplevel_handle_v1 *get_parent();
+    void set_parent(zwlr_foreign_toplevel_handle_v1*);
+    std::vector<zwlr_foreign_toplevel_handle_v1*>& get_children();
     ~WayfireToplevel();
 
     class impl;
-    private:
+
+  private:
     std::unique_ptr<impl> pimpl;
 };
 

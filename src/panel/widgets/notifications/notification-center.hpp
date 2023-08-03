@@ -10,7 +10,7 @@
 
 class WayfireNotificationCenter : public WayfireWidget
 {
-    private:
+  private:
     static const int WIDTH = 300, HEIGHT = 400;
 
     const std::shared_ptr<Daemon> daemon = Daemon::Launch();
@@ -36,7 +36,7 @@ class WayfireNotificationCenter : public WayfireWidget
     WfOption<int> icon_size{"panel/notifications_icon_size"};
     bool dnd_enabled = false;
 
-    public:
+  public:
     void init(Gtk::HBox *container) override;
     ~WayfireNotificationCenter() override
     {

@@ -15,7 +15,7 @@ class WayfireWindowListBox : public Gtk::HBox
     Gtk::Widget *top_widget = nullptr;
     int top_x = 0;
 
-    public:
+  public:
     WayfireWindowListBox();
 
     /**
@@ -47,7 +47,7 @@ class WayfireWindowListBox : public Gtk::HBox
      *
      * @return The direct child widget or none if it doesn't exist
      */
-    Gtk::Widget* get_widget_at(int x);
+    Gtk::Widget *get_widget_at(int x);
 
     /**
      * Get the list of widgets sorted from left to right, i.e ignoring the top
@@ -58,7 +58,7 @@ class WayfireWindowListBox : public Gtk::HBox
 
 class WayfireWindowList : public WayfireWidget
 {
-    public:
+  public:
     std::map<zwlr_foreign_toplevel_handle_v1*,
         std::unique_ptr<WayfireToplevel>> toplevels;
 
