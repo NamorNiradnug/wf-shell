@@ -194,12 +194,7 @@ class WayfirePanel::impl
             return Widget(new WayfireVolume());
 #else
     #warning "Pulse not found, volume widget will not be available."
-<<<<<<< HEAD
             std::cerr << "Built without pulse support, volume widget is not available." << std::endl;
-=======
-            std::cerr << "Built without pulse support, volume widget "
-                         " is not available." << std::endl;
->>>>>>> upstream/master
 #endif
         }
 
