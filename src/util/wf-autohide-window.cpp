@@ -47,7 +47,6 @@ WayfireAutohidingWindow::WayfireAutohidingWindow(WayfireOutput *output,
     this->signal_focus_out_event().connect_notify(
         [=] (const GdkEventFocus*)
     {
-        std::cout << "unfocus" << std::endl;
         if (this->active_button)
         {
             unset_active_popover(*this->active_button);

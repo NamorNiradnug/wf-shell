@@ -10,6 +10,7 @@
 #define dbus_method(name)                                                                                              \
     void name ## dbus_method(const Glib::ustring & sender, const Glib::VariantContainerBase & parameters,                  \
     const Glib::RefPtr<Gio::DBus::MethodInvocation> & invocation)
+
 class Daemon
 {
   public:

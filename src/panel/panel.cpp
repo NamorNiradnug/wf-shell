@@ -194,7 +194,12 @@ class WayfirePanel::impl
             return Widget(new WayfireVolume());
 #else
     #warning "Pulse not found, volume widget will not be available."
+<<<<<<< HEAD
             std::cerr << "Built without pulse support, volume widget is not available." << std::endl;
+=======
+            std::cerr << "Built without pulse support, volume widget "
+                         " is not available." << std::endl;
+>>>>>>> upstream/master
 #endif
         }
 
@@ -283,7 +288,10 @@ class WayfirePanel::impl
     WfOption<std::string> center_widgets_opt{"panel/widgets_center"};
     void init_widgets()
     {
-        left_widgets_opt.set_callback([=] () { reload_widgets(left_widgets_opt, left_widgets, left_box); });
+        left_widgets_opt.set_callback([=] ()
+        {
+            reload_widgets(left_widgets_opt, left_widgets, left_box);
+        });
         right_widgets_opt.set_callback([=] ()
         {
             reload_widgets(right_widgets_opt, right_widgets, right_box);
@@ -291,7 +299,15 @@ class WayfirePanel::impl
         center_widgets_opt.set_callback([=] ()
         {
             reload_widgets(center_widgets_opt, center_widgets, center_box);
+            if (center_box.get_children().empty())
+            {
+                content_box.unset_center_widget();
+            } else
+            {
+                content_box.set_center_widget(center_box);
+            }
         });
+
         reload_widgets(left_widgets_opt, left_widgets, left_box);
         reload_widgets(right_widgets_opt, right_widgets, right_box);
         reload_widgets(center_widgets_opt, center_widgets, center_box);

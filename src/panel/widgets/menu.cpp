@@ -74,9 +74,9 @@ bool WfMenuMenuItem::fuzzy_match(const Glib::ustring & pattern)
 
     auto pattern_lower = pattern.lowercase();
 
-    return ::fuzzy_match(progr.lowercase(), pattern_lower) ||
-           ::fuzzy_match(name.lowercase(), pattern_lower) ||
-           ::fuzzy_match(long_name.lowercase(), pattern_lower);
+    return ::fuzzy_match(progr.lowercase(), pattern) ||
+           ::fuzzy_match(name.lowercase(), pattern) ||
+           ::fuzzy_match(long_name.lowercase(), pattern);
 }
 
 bool WfMenuMenuItem::matches(const Glib::ustring & pattern)
@@ -392,7 +392,7 @@ WayfireLogoutUI::WayfireLogoutUI()
 void WayfireMenu::on_logout_click()
 {
     button->get_popover()->hide();
-    if (!std::string(menu_logout_command).empty())
+    if (!menu_logout_command.value().empty())
     {
         g_spawn_command_line_async(std::string(menu_logout_command).c_str(), NULL);
         return;
@@ -469,18 +469,12 @@ void WayfireMenu::init(Gtk::HBox *container)
     load_menu_items_all();
     update_popover_layout();
 
-    GAppInfoMonitor *app_info_monitor = g_app_info_monitor_get();
-    app_info_monitor_connection = g_signal_connect(app_info_monitor, "changed", G_CALLBACK(
-        app_info_changed), this);
+    app_info_monitor_changed_handler_id =
+        g_signal_connect(app_info_monitor, "changed", G_CALLBACK(app_info_changed), this);
 
     hbox.show();
     main_image.show();
     button->show();
-}
-
-WayfireMenu::~WayfireMenu()
-{
-    g_signal_handler_disconnect(g_app_info_monitor_get(), app_info_monitor_connection);
 }
 
 void WayfireMenu::hide_menu()
