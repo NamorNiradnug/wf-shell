@@ -92,6 +92,7 @@ void WayfireVolume::update_icon()
     };
 
     set_image_icon(main_image, icon_name_from_state.at(current), icon_size);
+    volume_scale.set_has_origin(current != VOLUME_LEVEL_MUTE);
 }
 
 bool WayfireVolume::on_popover_timeout(int timer)
