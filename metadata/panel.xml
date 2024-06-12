@@ -104,6 +104,10 @@
 		<_long>Max number of symbols of window name to show in window list.</_long>
 		<default>25</default>
 	</option>
+	<option name="middle_click_close" type="bool">
+		<_short>Middle Click Closes Windows</_short>
+		<default>false</default>
+	</option>
 	</group>
 	<group>
 	<_short>Clock</_short>
@@ -348,13 +352,6 @@ Set to -1 to only run it by clicking the button.
 			</desc>
 			<default>left</default>
 		</entry>
-	</option>
-	</group>
-	<group>
-	<_short>Window List</_short>
-	<option name="middle_click_close" type="bool">
-		<_short>Middle Click Closes Windows</_short>
-		<default>false</default>
 	</option>
 	</group>
 	</plugin>
