@@ -7,6 +7,7 @@ void WayfireClock::init(Gtk::HBox *container)
     button = std::make_unique<WayfireMenuButton>("panel");
     button->add(label);
     button->show();
+    label.set_justify(Gtk::JUSTIFY_CENTER);
     label.show();
 
     update_label();
